@@ -8,9 +8,9 @@ RUN pip3 install --upgrade pip setuptools wheel && \
 
 RUN playwright install --with-deps
 
-FROM python:3.11.9-slim
+# FROM python:3.11.9-slim
 
-WORKDIR /app
+# WORKDIR /app
 
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+# COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY . .
