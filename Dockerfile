@@ -15,8 +15,5 @@ RUN pip3 install --upgrade pip setuptools wheel && \
 
 RUN playwright install --with-deps
 
-# FROM python:3.11.9-slim
-
-# WORKDIR /app
 
 COPY . .

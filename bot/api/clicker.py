@@ -62,6 +62,19 @@ async def get_account_info(
     return response_json
 
 
+async def get_skins(
+        http_client: aiohttp.ClientSession
+) -> dict:
+    response_json = await make_request(
+        http_client,
+        'POST',
+        'https://api.hamsterkombatgame.io/clicker/get-skin',
+        {},
+        'getting Skins',
+    )
+    return response_json
+
+
 async def send_taps(
         http_client: aiohttp.ClientSession, available_energy: int, taps: int
 ) -> dict[Any, Any] | Any:
@@ -72,12 +85,12 @@ async def send_taps(
         {
             'availableTaps': available_energy,
             'count': taps,
-            'timestamp': time(),
+            'timestamp': int(time()),
         },
         'Tapping',
         ignore_status=422,
     )
 
-    player_data = response_json.get('clickerUser') or response_json.get('found', {}).get('clickerUser', {})
+    profile_data = response_json.get('clickerUser') or response_json.get('found', {}).get('clickerUser', {})
 
-    return player_data
+    return profile_data
