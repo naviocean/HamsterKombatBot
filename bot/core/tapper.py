@@ -285,46 +285,60 @@ class Tapper:
                         promo_activates = {promo['promoId']: promo['receiveKeysToday']
                                            for promo in promo_states}
 
-                        app_token = "d28721be-fd2d-4b45-869e-9f253b554e50"
-                        promo_id = "43e35910-c168-4634-ad4f-52fd764a843f"
+                        app_tokens = {
+                            "fe693b26-b342-4159-8808-15e3ff7f8767": "74ee0b5b-775e-4bee-974f-63e7f4d5bacb",
+                            "b4170868-cef0-424f-8eb9-be0622e8e8e3": "d1690a07-3780-4068-810f-9b5bbf2931b2",
+                            "c4480ac7-e178-4973-8061-9ed5b2e17954": "82647f43-3f87-402d-88dd-09a90025313f",
+                            "43e35910-c168-4634-ad4f-52fd764a843f": "d28721be-fd2d-4b45-869e-9f253b554e50"
+                        }
 
-                        keys_per_day = 4
-                        keys_per_code = 1
-
-                        today_promo_activates_count = promo_activates.get(promo_id, 0)
-
-                        if today_promo_activates_count >= keys_per_day:
-                            logger.info(f"{self.session_name} | Promo Codes already claimed today")
-
-                        while today_promo_activates_count < keys_per_day:
-                            promo_code = await get_promo_code(app_token=app_token,
-                                                              promo_id=promo_id,
-                                                              max_attempts=10,
-                                                              event_timeout=20,
-                                                              session_name=self.session_name,
-                                                              proxy=proxy)
-
-                            if not promo_code:
+                        promos = promos_data.get('promos', [])
+                        for promo in promos:
+                            promo_id = promo['promoId']
+                            app_token = app_tokens.get(promo_id)
+                            if not app_token:
                                 continue
 
-                            profile_data, promo_state = await apply_promo(http_client=http_client,
-                                                                          promo_code=promo_code)
+                            title = promo['title']['en']
+                            keys_per_day = promo['keysPerDay']
+                            keys_per_code = 1
 
-                            if profile_data and promo_state:
-                                total_keys = profile_data.get('totalKeys', total_keys)
-                                today_promo_activates_count = promo_state.get('receiveKeysToday',
-                                                                              today_promo_activates_count)
+                            today_promo_activates_count = promo_activates.get(promo_id, 0)
 
-                                logger.success(f"{self.session_name} | "
-                                               f"Successfully activated promo code <lc>{promo_code}</lc> in <lm>BIKE</lm> game | "
-                                               f"Get <ly>{today_promo_activates_count}</ly><lw>/</lw><ly>{keys_per_day}</ly> keys | "
-                                               f"Total keys: <le>{total_keys}</le> (<lg>+{keys_per_code}</lg>)")
-                            else:
-                                logger.info(f"{self.session_name} | "
-                                            f"Promo code <lc>{promo_code}</lc> was wrong in <lm>BIKE</lm> game | "
-                                            f"Trying again...")
+                            if today_promo_activates_count >= keys_per_day:
+                                logger.info(
+                                    f"{self.session_name} | Promo Codes already claimed today for <lm>{title}</lm> game")
 
-                            await asyncio.sleep(delay=2)
+                            while today_promo_activates_count < keys_per_day:
+                                promo_code = await get_promo_code(app_token=app_token,
+                                                                  promo_id=promo_id,
+                                                                  promo_title=title,
+                                                                  max_attempts=15,
+                                                                  event_timeout=20,
+                                                                  session_name=self.session_name,
+                                                                  proxy=proxy)
+
+                                if not promo_code:
+                                    continue
+
+                                profile_data, promo_state = await apply_promo(http_client=http_client,
+                                                                              promo_code=promo_code)
+
+                                if profile_data and promo_state:
+                                    total_keys = profile_data.get('totalKeys', total_keys)
+                                    today_promo_activates_count = promo_state.get('receiveKeysToday',
+                                                                                  today_promo_activates_count)
+
+                                    logger.success(f"{self.session_name} | "
+                                                   f"Successfully activated promo code <lc>{promo_code}</lc> in <lm>{title}</lm> game | "
+                                                   f"Get <ly>{today_promo_activates_count}</ly><lw>/</lw><ly>{keys_per_day}</ly> keys | "
+                                                   f"Total keys: <le>{total_keys}</le> (<lg>+{keys_per_code}</lg>)")
+                                else:
+                                    logger.info(f"{self.session_name} | "
+                                                f"Promo code <lc>{promo_code}</lc> was wrong in <lm>{title}</lm> game | "
+                                                f"Trying again...")
+
+                                await asyncio.sleep(delay=2)
 
                     await asyncio.sleep(delay=randint(2, 4))
 
