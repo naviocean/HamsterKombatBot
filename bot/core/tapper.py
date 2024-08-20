@@ -16,7 +16,14 @@ from bot.utils.scripts import decode_cipher, get_headers, get_mini_game_cipher, 
 from bot.exceptions import InvalidSession
 
 from bot.api.auth import login
-from bot.api.clicker import get_config, get_profile_data, get_ip_info, get_account_info, get_skins, send_taps
+from bot.api.clicker import (
+    get_version_config,
+    get_game_config,
+    get_profile_data,
+    get_ip_info,
+    get_account_info,
+    get_skins,
+    send_taps)
 from bot.api.boosts import get_boosts, apply_boost
 from bot.api.upgrades import get_upgrades, buy_upgrade
 from bot.api.combo import claim_daily_combo, get_combo_cards
@@ -85,7 +92,14 @@ class Tapper:
 
                     account_info = await get_account_info(http_client=http_client)
                     profile_data = await get_profile_data(http_client=http_client)
-                    game_config = await get_config(http_client=http_client)
+
+                    config_version = http_client.headers.get('Config-Version')
+                    http_client.headers.pop('Config-Version', None)
+                    if config_version:
+                        version_config = await get_version_config(http_client=http_client,
+                                                                  config_version=config_version)
+
+                    game_config = await get_game_config(http_client=http_client)
                     upgrades_data = await get_upgrades(http_client=http_client)
                     tasks = await get_tasks(http_client=http_client)
                     airdrop_tasks = await get_airdrop_tasks(http_client=http_client)
@@ -204,8 +218,8 @@ class Tapper:
                         else:
                             logger.info(f"{self.session_name} | Daily Reward already claimed today")
 
-                        tasks = await get_tasks(http_client=http_client)
-                        upgrades_data = await get_upgrades(http_client=http_client)
+                        await get_tasks(http_client=http_client)
+                        await get_upgrades(http_client=http_client)
 
                     await asyncio.sleep(delay=randint(2, 4))
 
@@ -289,7 +303,9 @@ class Tapper:
                             "fe693b26-b342-4159-8808-15e3ff7f8767": "74ee0b5b-775e-4bee-974f-63e7f4d5bacb",
                             "b4170868-cef0-424f-8eb9-be0622e8e8e3": "d1690a07-3780-4068-810f-9b5bbf2931b2",
                             "c4480ac7-e178-4973-8061-9ed5b2e17954": "82647f43-3f87-402d-88dd-09a90025313f",
-                            "43e35910-c168-4634-ad4f-52fd764a843f": "d28721be-fd2d-4b45-869e-9f253b554e50"
+                            "43e35910-c168-4634-ad4f-52fd764a843f": "d28721be-fd2d-4b45-869e-9f253b554e50",
+                            "dc128d28-c45b-411c-98ff-ac7726fbaea4": "8d1cc2ad-e097-4b86-90ef-7a27e19fb833",
+                            "61308365-9d16-4040-8bb0-2f4a4c69074c": "61308365-9d16-4040-8bb0-2f4a4c69074c"
                         }
 
                         promos = promos_data.get('promos', [])
@@ -306,15 +322,15 @@ class Tapper:
                             today_promo_activates_count = promo_activates.get(promo_id, 0)
 
                             if today_promo_activates_count >= keys_per_day:
-                                logger.info(
-                                    f"{self.session_name} | Promo Codes already claimed today for <lm>{title}</lm> game")
+                                logger.info(f"{self.session_name} | "
+                                            f"Promo Codes already claimed today for <lm>{title}</lm> game")
 
                             while today_promo_activates_count < keys_per_day:
                                 promo_code = await get_promo_code(app_token=app_token,
                                                                   promo_id=promo_id,
                                                                   promo_title=title,
-                                                                  max_attempts=15,
-                                                                  event_timeout=20,
+                                                                  max_attempts=20,
+                                                                  event_timeout=120 if title == "My Clone Army" else 20,
                                                                   session_name=self.session_name,
                                                                   proxy=proxy)
 
@@ -370,7 +386,7 @@ class Tapper:
                                 else:
                                     logger.info(f"{self.session_name} | Task <ly>{task_id}</ly> is not complete")
 
-                        upgrades_data = await get_upgrades(http_client=http_client)
+                        await get_upgrades(http_client=http_client)
 
                     await asyncio.sleep(delay=randint(2, 4))
 
