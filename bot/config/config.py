@@ -12,6 +12,7 @@ class Settings(BaseSettings):
 
     AUTO_UPGRADE: bool = False
     MAX_LEVEL: int = 20
+    MIN_PROFIT: int = 1000
     MAX_PRICE: int = 50000000
 
     BALANCE_TO_SAVE: int = 1000000
@@ -26,7 +27,9 @@ class Settings(BaseSettings):
     APPLY_DAILY_ENERGY: bool = True
     APPLY_DAILY_MINI_GAME: bool = True
 
-    USE_RANDOM_MINI_GAME_KEY: bool = True
+    SLEEP_MINI_GAME_TILES: list[int] = [600, 900]
+    SCORE_MINI_GAME_TILES: list[int] = [300, 500]
+    GAMES_COUNT: list[int] = [1, 10]
 
     AUTO_COMPLETE_TASKS: bool = True
 
