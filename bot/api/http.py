@@ -1,5 +1,6 @@
 import json
 import asyncio
+from typing import Any, Union, Dict, List, Optional, Tuple
 
 import aiohttp
 
@@ -13,11 +14,16 @@ async def make_request(
         url: str,
         json_data: dict,
         error_context: str,
-        ignore_status: int | None = None,
+        ignore_status: Optional[int] = None,
 ) -> dict:
     response_text = ''
     try:
-        response = await http_client.request(method=method, url=url, json=json_data)
+        response = await http_client.request(method=method, url=url, json=json_data, ssl=False)
+
+        config_version = response.headers.get('Config-Version')
+        if config_version and not http_client.headers.get('Config-Version'):
+            http_client.headers['Config-Version'] = config_version
+
         response_text = await response.text()
         if ignore_status is None or response.status != ignore_status:
             response.raise_for_status()

@@ -1,4 +1,5 @@
-from typing import Any
+
+from typing import Any, Union, Dict, List, Optional, Tuple
 
 import aiohttp
 
@@ -7,7 +8,7 @@ from bot.api.http import make_request
 
 async def get_tasks(
         http_client: aiohttp.ClientSession,
-) -> dict[Any, Any] | Any:
+) -> Union[Dict[Any, Any], Any]:
     response_json = await make_request(
         http_client,
         'POST',
@@ -15,13 +16,14 @@ async def get_tasks(
         {},
         'getting Tasks',
     )
-    tasks = response_json.get('tasks')
+    tasks = response_json.get('tasks', [])
+
     return tasks
 
 
 async def get_airdrop_tasks(
         http_client: aiohttp.ClientSession,
-) -> dict[Any, Any] | Any:
+) -> Union[Dict[Any, Any], Any]:
     response_json = await make_request(
         http_client,
         'POST',
@@ -33,14 +35,19 @@ async def get_airdrop_tasks(
     return tasks
 
 
-async def claim_daily_reward(
-        http_client: aiohttp.ClientSession
-) -> bool:
+async def check_task(
+        http_client: aiohttp.ClientSession, task_id: str
+) -> Tuple[Dict[Any, Any], Dict[Any, Any]]:
     response_json = await make_request(
         http_client,
         'POST',
         'https://api.hamsterkombatgame.io/clicker/check-task',
-        {'taskId': 'streak_days'},
-        'getting Daily',
+        {'taskId': task_id},
+        'Check Task',
+        ignore_status=422
     )
-    return bool(response_json)
+
+    task = response_json.get('task', {}) or response_json.get('found', {}).get('task')
+    profile_data = response_json.get('clickerUser') or response_json.get('found', {}).get('clickerUser', {})
+
+    return task, profile_data
